@@ -1,8 +1,8 @@
 package cn.yqtl.pay.ccb.model
 
-import cn.hutool.core.date.DatePattern
 import cn.yqtl.pay.ccb.Configuration
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class GenerateBillRequest(
     override val configuration: Configuration,
@@ -51,7 +51,7 @@ class GenerateBillRequest(
         }
 
     init {
-        putTxInfoField("DATE", date.format(DatePattern.PURE_DATE_FORMATTER))
+        putTxInfoField("DATE", date.format(DateTimeFormatter.BASIC_ISO_DATE))
         this.kind = kind
         this.fileType = fileType
     }
