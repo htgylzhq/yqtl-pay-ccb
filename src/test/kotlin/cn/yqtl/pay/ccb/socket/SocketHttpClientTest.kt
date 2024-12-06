@@ -21,6 +21,7 @@ class SocketHttpClientTest {
     private lateinit var client: SocketHttpClient
     private lateinit var executor: ExecutorService
     private val serverPort = 18080
+    private val timeout = 200
     private val testContent = "Hello, World!"
 
     @BeforeEach
@@ -36,7 +37,7 @@ class SocketHttpClientTest {
                 executor.submit { acceptConnections() }
                 // 等待服务器启动
                 Thread.sleep(100)
-                client = SocketHttpClient(StandardCharsets.UTF_8, 5000)
+                client = SocketHttpClient(StandardCharsets.UTF_8, timeout)
                 return
             } catch (e: Exception) {
                 lastException = e
@@ -110,7 +111,7 @@ class SocketHttpClientTest {
 
     private fun handleTimeout(socket: Socket) {
         println("Handling /timeout")
-        Thread.sleep(6000)
+        Thread.sleep(timeout + 10L)
         val response = buildResponse(200, "")
         socket.getOutputStream().write(response.toByteArray())
         socket.getOutputStream().flush()

@@ -14,59 +14,66 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class ZipFileUtilTest {
+    private data class TestData(
+        val targetFileName: String = "test.txt",
+        val targetContent: String = "测试内容",
+        val otherFileName: String = "other.txt",
+        val otherContent: String = "其他文件内容",
+        val targetPath: String = targetFileName
+    )
+
+    private fun createTestData() = TestData()
     
+    private fun createNestedTestData() = TestData(
+        targetPath = "dir/test.txt",
+        targetContent = "嵌套目录测试内容",
+        otherFileName = "other/file.txt"
+    )
+
     @Test
     fun `should extract specific file`(@TempDir tempDir: Path) {
-        // 准备测试数据
-        val testContent = "测试内容"
-        val targetFileName = "test.txt"
-        val otherContent = "其他文件内容"
-        val otherFileName = "other.txt"
+        val testData = createTestData()
         val zipFile = createTestZipFile(
             tempDir = tempDir,
-            targetFileName = targetFileName,
-            targetContent = testContent,
-            otherFileName = otherFileName,
-            otherContent = otherContent
+            targetFileName = testData.targetFileName,
+            targetContent = testData.targetContent,
+            otherFileName = testData.otherFileName,
+            otherContent = testData.otherContent
         )
 
         // 执行测试
         val extractedFile = ZipFileUtil.extractSpecificFile(
             zipFilePath = zipFile.toString(),
-            targetFileName = targetFileName,
+            targetFileName = testData.targetFileName,
             outputDir = tempDir.resolve("output").toString()
         )
 
         // 验证结果
         assertTrue(Files.exists(extractedFile))
-        assertEquals(testContent, Files.readString(extractedFile, StandardCharsets.UTF_8))
+        assertEquals(testData.targetContent, Files.readString(extractedFile, StandardCharsets.UTF_8))
     }
 
     @Test
     fun `should extract file from nested directory`(@TempDir tempDir: Path) {
-        // 准备测试数据
-        val testContent = "嵌套目录测试内容"
-        val targetFileName = "test.txt"
-        val otherContent = "其他文件内容"
-        val otherFileName = "other/file.txt"
+        val testData = createNestedTestData()
         val zipFile = createNestedZipFile(
             tempDir = tempDir,
-            targetPath = "dir/$targetFileName",
-            targetContent = testContent,
-            otherPath = otherFileName,
-            otherContent = otherContent
+            targetPath = testData.targetPath,
+            targetContent = testData.targetContent,
+            otherPath = testData.otherFileName,
+            otherContent = testData.otherContent
         )
 
         // 执行测试
         val extractedFile = ZipFileUtil.extractSpecificFile(
             zipFilePath = zipFile.toString(),
-            targetFileName = targetFileName,
+            targetFileName = testData.targetFileName,
             outputDir = tempDir.resolve("output").toString()
         )
 
         // 验证结果
         assertTrue(Files.exists(extractedFile))
-        assertEquals(testContent, Files.readString(extractedFile, StandardCharsets.UTF_8))
+        assertEquals(testData.targetContent, Files.readString(extractedFile, StandardCharsets.UTF_8))
     }
 
     @Test
@@ -95,17 +102,6 @@ class ZipFileUtilTest {
                 outputDir = tempDir.resolve("output").toString()
             )
         }
-    }
-
-    @Test
-    fun `shoud extract bill file`(@TempDir tempDir: Path) {
-        val zipFilePath = "/Users/rochuukyou/Developer/Projects/yqtl-pay-ccb/src/test/resources/sample-data/SHOP.105000080626868.20241203.20241203.20241204140658056.MmWR.zip"
-        var billFile = ZipFileUtil.extractSpecificFile(
-            zipFilePath = zipFilePath,
-            targetFileName = "SHOP.105000080626868.20241203.txt",
-            outputDir = tempDir.resolve("output").toString()
-        )
-        println(Files.readString(billFile))
     }
 
     private fun createTestZipFile(

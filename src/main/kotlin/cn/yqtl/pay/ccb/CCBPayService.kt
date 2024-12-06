@@ -6,21 +6,20 @@ import cn.yqtl.pay.ccb.util.XmlUtil
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URLEncoder
-import java.nio.charset.Charset
 import java.nio.file.Path
 
 class CCBPayService {
     companion object {
         private val log = LoggerFactory.getLogger(CCBPayService::class.java)
-        private val CHARSET: Charset = Charset.forName("GB18030")
-        private const val CONNECT_TIMEOUT = 10_000 // 10 seconds
     }
 
     private fun sendToEBS(request: Request): String {
         val requestXml = request.toString()
         log.debug("CCB_EBS_Request: {}", requestXml)
-        
-        val params = "requestXml=${URLEncoder.encode(requestXml, CHARSET)}"
+
+        val charset = request.configuration.charset
+
+        val params = "requestXml=${URLEncoder.encode(requestXml, charset)}"
 
         val headers = mapOf(
             "Content-Type" to "application/x-www-form-urlencoded",
@@ -29,14 +28,14 @@ class CCBPayService {
         )
 
         val response = SocketHttpClient(
-            charset = CHARSET,
-            connectTimeout = CONNECT_TIMEOUT
+            charset = charset,
+            connectTimeout = request.configuration.timeout
         ).post(
             url = request.configuration.ebsUrl,
             headers = headers,
             body = params
         )
-        
+
         log.debug("CCB_EBS_Response: {}", response)
         return response
     }
@@ -48,7 +47,7 @@ class CCBPayService {
 
     fun downloadBill(
         request: DownloadBillRequest
-    ): DownloadBillResponse {        
+    ): DownloadBillResponse {
         val responseXml = sendToEBS(request)
         return XmlUtil.fromXml(responseXml)
     }
@@ -62,23 +61,23 @@ class CCBPayService {
      */
     fun downloadBillFile(configuration: Configuration, fileName: String, targetDirectory: Path): Path {
         // 构建下载URL
-        val encodedFileName = URLEncoder.encode(fileName, CHARSET)
+        val encodedFileName = URLEncoder.encode(fileName, configuration.charset)
         val downloadUrl = "${configuration.billUrl}/$encodedFileName"
-        
+
         log.debug("Downloading bill file from: {}", downloadUrl)
-        
+
         val targetFile = targetDirectory.resolve(fileName)
         var attempts = 0
         val maxAttempts = 3
         var lastException: Exception? = null
-        
+
         while (attempts < maxAttempts) {
             try {
                 val client = SocketHttpClient(
-                    charset = CHARSET,
-                    connectTimeout = CONNECT_TIMEOUT
+                    charset = configuration.charset,
+                    connectTimeout = configuration.timeout
                 )
-                
+
                 val path = client.downloadFile(downloadUrl, targetFile)
                 log.debug("Downloaded bill file to: {}", path.toAbsolutePath())
                 return path
@@ -86,13 +85,13 @@ class CCBPayService {
                 lastException = e
                 log.warn("Attempt ${attempts + 1} failed to download file", e)
             }
-            
+
             attempts++
             if (attempts < maxAttempts) {
                 Thread.sleep(2000L * attempts)
             }
         }
-        
+
         throw IOException("Failed to download bill file after $maxAttempts attempts", lastException)
     }
 }
