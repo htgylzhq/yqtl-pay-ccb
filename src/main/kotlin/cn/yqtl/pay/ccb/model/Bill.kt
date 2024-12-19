@@ -21,8 +21,8 @@ data class BillDetail(
     val tradeTime: LocalDateTime,    // 交易时间
     val accountDate: String,         // 记账日期
     val bankSerial: String,          // 银行流水号
-    val merchantSerial: String,      // 商户流水号
-    val orderNo: String,             // 订单号
+    val merchantSerial: String,      // 商户流水号（退款单号）
+    val orderNo: String,             // 订单号（支付单号）
     val status: String,              // 订单状态
     val payerAccount: String,        // 付款方账号
     val payerName: String,           // 付款方户名
@@ -33,4 +33,9 @@ data class BillDetail(
     val counterCode: String,         // 柜台代码
     val channel: String,             // 发卡行/通道
     val cardType: String             // 支付卡种
-)
+) {
+    val outTradeNo = orderNo
+    val outRefundNo = merchantSerial
+    val isPay: Boolean = tradeAmount > BigDecimal.ZERO
+    val isRefund: Boolean = tradeAmount < BigDecimal.ZERO
+}
