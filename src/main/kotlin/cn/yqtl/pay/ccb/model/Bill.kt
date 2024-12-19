@@ -33,4 +33,7 @@ data class BillDetail(
     val counterCode: String,         // 柜台代码
     val channel: String,             // 发卡行/通道
     val cardType: String             // 支付卡种
-)
+) {
+    val isPay: Boolean = tradeAmount > BigDecimal.ZERO
+    val isRefund: Boolean = tradeAmount < BigDecimal.ZERO
+}
